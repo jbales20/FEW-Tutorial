@@ -12,12 +12,14 @@
 <canvas id="myCanvas" width="480" height="320"></canvas>
 
 <script>
-	var canvas = document.getElementById("myCanvas");
+    var canvas = document.getElementById("myCanvas");
+    // Canvas
     var ctx = canvas.getContext("2d");
     var x = canvas.width/2;
     var y = canvas.height-30;
-    var dx = 2;
-    var dy = -2;
+    // Ball Speed
+    var dx = 0;
+    var dy = -3;
 
     function drawBall() {
         ctx.beginPath();

@@ -21,6 +21,7 @@
     var dx = 2;
     var dy = -2;
     var ballRadius = 10;
+    var color = "#2e2e"
     // Paddle
     var paddleHeight = 10;
     var paddleWidth = 75;
@@ -29,32 +30,44 @@
     var rightPressed = false;
     var leftPressed = false;
     // Bricks
+    function bricks(){
+        return Math.round(Math.random() * (15 - 3) + 3);
+    }
     var brickRowCount = 5;
-    var brickColumnCount = 6;
+    var brickColumnCount = bricks();
     var brickPadding = 10;
     var brickHeight = 20;
     var brickOffsetTop = 30;
     var brickOffsetLeft = 30;
+    var totalBricks = brickRowCount*brickColumnCount;
     // I added Total here to automatically get a width so all bricks can be on screen. 
     var total = canvas.width - (brickPadding*brickColumnCount) - brickOffsetLeft*1.5;
     var brickWidth = total/brickColumnCount;
     // Score
     var score = 0;
+    // Lives
+    var lives = 3;
 
     var bricks = [];
     for(var c=0; c<brickColumnCount; c++) {
         bricks[c] = [];
         for(var r=0; r<brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 1 };
+            bricks[c][r] = { x: 0, y: 0, status: 1, c: 0, r: 0};
         }
     }
 
-    
+    function drawBackground(){
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#8b0000";
+        ctx.fill();
+        ctx.closePath();
+    }
 
     function drawBall() {
         ctx.beginPath();
         ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-        ctx.fillStyle = "#0095DD";
+        ctx.fillStyle = color;
         ctx.fill();
         ctx.closePath();
     }
@@ -62,9 +75,18 @@
     function drawPaddle() {
     ctx.beginPath();
     ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
-    ctx.fillStyle = "#0095DD";
+    ctx.fillStyle = "#ff6558";
     ctx.fill();
     ctx.closePath();
+    }
+
+    function random_color(){
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
     }
 
 function drawBricks() {
@@ -75,9 +97,17 @@ function drawBricks() {
                 var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
                 bricks[c][r].x = brickX;
                 bricks[c][r].y = brickY;
+                bricks[c][r].c = c;
+                bricks[c][r].r = r;
                 ctx.beginPath();
                 ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                ctx.fillStyle = "#0095DD";
+                if((c % 2 == 0 && r % 2 == 0) || (c % 2 != 0 && r % 2 != 0)){
+                    ctx.fillStyle = "black";
+                }else if((c % 2 == 0 && r % 2 != 0) && (c < 5 && c > 3) && (r < 3 && c > 1) ){
+                    ctx.fillStyle = "purple";
+                }else{
+                    ctx.fillStyle = "green";
+                }
                 ctx.fill();
                 ctx.closePath();
             }
@@ -86,12 +116,13 @@ function drawBricks() {
 }
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
         drawBall();
         drawPaddle();
         drawBricks();
         collisionDetection();
         drawScore();
+        drawLives();
         if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
             dx = -dx;
         }
@@ -102,9 +133,19 @@ function drawBricks() {
         dy = -dy;
     }
     else {
-        alert("GAME OVER");
-        document.location.reload();
-        clearInterval(interval);
+        lives--;
+        if(!lives) {
+            alert("GAME OVER");
+            document.location.reload();
+            requestAnimationFrame(draw);
+        }
+        else {
+            x = canvas.width/2;
+            y = canvas.height-30;
+            dx = 2;
+            dy = -2;
+            paddleX = (canvas.width-paddleWidth)/2;
+        }
         }
     }
         if(rightPressed) {
@@ -122,6 +163,7 @@ else if(leftPressed) {
 
         x += dx;
         y += dy;
+        requestAnimationFrame(draw);
         }
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
@@ -158,13 +200,28 @@ else if(leftPressed) {
                 var b = bricks[c][r];
                 if(b.status == 1) {
                 if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+                    if((b.c % 2 == 0 && b.r % 2 == 0) || (b.c % 2 != 0 && b.r % 2 != 0)){
+                        color = "black";
+
+                    }else{
+                        color = "green";
+                    }
                     dy = -dy;
+                    
                     b.status = 0;
-                    score++;
-                    if(score == brickRowCount*brickColumnCount) {
-                        alert("YOU WIN, CONGRATULATIONS!");
+                    
+                    if((b.c % 2 == 0 && b.r % 2 != 0) && (b.c < 5 && b.c > 3) && (b.r < 3 && b.c > 1) ){
+                        score += 2;
+                    }else{
+                        score++;
+                    }
+                    totalBricks--;
+                    if(totalBricks == 0) {
+                        score = score + lives*5;
+                        var message = "YOU WIN, CONGRATULATIONS! Your score was " + score + ". Your score was increased by " + lives*5 + " because you had " + lives +" lives left."; 
+                        alert(message);
                         document.location.reload();
-                        clearInterval(interval); // Needed for Chrome to end game
+                        requestAnimationFrame(draw);
                     }
                     }
                 }
@@ -178,8 +235,13 @@ else if(leftPressed) {
         ctx.fillText("Score: "+score, 8, 20);
     }
 
+    function drawLives() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#0095DD";
+    ctx.fillText("Lives: "+lives, canvas.width-65, 20);
+    }
 
-    var interval = setInterval(draw, 10);
+    draw();
 </script>
 </body>
 </html>

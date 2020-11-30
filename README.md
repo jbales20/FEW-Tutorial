@@ -2,7 +2,7 @@
 This was made following the GameDev Canvas Breakout tutorial from Mozilla. 
 It is a simple javascript game that draws rectangles, circles and text on the screen. 
 
-﻿# Strech Challenges
+﻿-- Stretch Challenges
 1. Alternating Colors for the bricks.
 2. The ball changes colors to the brick it touches besides the one purple brick.
 3. A random purple brick which is worth two points instead of one.
